@@ -1,0 +1,12 @@
+pandas
+numpy
+pyarrow
+fastparquet
+scikit-learn
+pydantic
+mlflow
+transformers
+peft
+trl
+datasets
+torch
