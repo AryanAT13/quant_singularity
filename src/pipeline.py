@@ -54,7 +54,9 @@ class InferencePipeline:
             outputs = self.model.generate(
                 **inputs, 
                 max_new_tokens=150,
-                temperature=0.1,  
+                temperature=0.3,       
+                top_p=0.9,            
+                repetition_penalty=1.1, 
                 do_sample=True,
                 pad_token_id=self.tokenizer.pad_token_id,
                 eos_token_id=self.tokenizer.eos_token_id
