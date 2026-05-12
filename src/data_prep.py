@@ -1,13 +1,13 @@
 import json
+import ast
 import re
-import random
 
 def calculate_confluence_conviction(market_state, direction):
-    # Trend 
+    # 1. Trend Alignment
     adx = float(market_state.get('adx_14', 0))
     trend_aligned = adx > 20.0 
     
-    # Volatility Support
+    # 2. Volatility Support
     vix = float(market_state.get('vix_india', 15))
     if direction == "CE":
         vol_support = vix < 20
@@ -16,7 +16,7 @@ def calculate_confluence_conviction(market_state, direction):
     else:
         vol_support = True
         
-    # PCR 
+    # 3. PCR Alignment
     pcr = float(market_state.get('pcr', 1.0))
     if direction == "CE":
         pcr_aligned = pcr < 1.0
@@ -37,10 +37,8 @@ def calculate_confluence_conviction(market_state, direction):
     return round(score, 2), analysis_block
 
 def process_and_clean_data():
+    cleaned_data = []
     anomalies = {"malformed_output": 0, "missing_fields": 0, "illogical_signal": 0}
-    
-    directional_samples = []
-    neutral_samples = []
 
     try:
         with open('data/raw/finetune_instructions.jsonl', 'r') as f:
@@ -59,15 +57,17 @@ def process_and_clean_data():
             input_json = json.loads(input_str)
             target_json = json.loads(output_str)
         except json.JSONDecodeError:
+            print(f"Anomaly Caught (Row {idx}): Malformed nested JSON. Discarding.")
             anomalies["malformed_output"] += 1
             continue
 
         direction = target_json.get('direction')
         horizon = target_json.get('horizon')
         signal_id = target_json.get('signal_id')
-        timestamp = target_json.get('generated_at')
+        timestamp = target_json.get('generated_at') 
         
         if not all([direction, horizon, signal_id, timestamp]):
+            print(f"Anomaly Caught (Row {idx}): Missing critical schema keys. Discarding.")
             anomalies["missing_fields"] += 1
             continue
 
@@ -81,59 +81,42 @@ def process_and_clean_data():
             original_conviction = float(match.group(1)) if match else 0.0
 
         if original_conviction > 0.7 and conviction_score < 0.4:
+             print(f"Anomaly Caught (Row {idx}): Illogical Signal. Target conviction is {original_conviction} but confluence is {conviction_score}. Discarding.")
              anomalies["illogical_signal"] += 1
              continue
 
-        final_direction = direction
-        if conviction_score < 0.4:
-            final_direction = "NEUTRAL"
-            conviction_score = 1.0 # High conviction in staying cash
-            analysis_block = calculate_confluence_conviction(input_json, final_direction)[1]
-
         upgraded_target = {
             "analysis": analysis_block,
-            "direction": final_direction,
+            "direction": direction,
             "conviction": conviction_score, 
             "horizon": horizon,
             "signal_id": signal_id,
             "timestamp": timestamp 
         }
         
-        new_instruction = "Analyze the provided NIFTY options market state. First output an 'analysis' block with boolean values for trend_aligned, volatility_support, and pcr_aligned. Then output the final directional signal, horizon, signal_id, timestamp, and a strictly calculated conviction score derived from the analysis block."
+        new_instruction = "Analyze the provided NIFTY options market state. First output an 'analysis' block with boolean values for trend_aligned, volatility_support, and pcr_aligned. Then output the final directional signal, horizon, signal_id, timestamp, and a strictly calculated conviction score (0.33, 0.66, or 1.0) derived from the analysis block."
 
-        clean_row = {
+        cleaned_data.append({
             "instruction": new_instruction,
             "input": input_str, 
             "output": json.dumps(upgraded_target) 
-        }
-        
-        if final_direction in ["CE", "PE"]:
-            directional_samples.append(clean_row)
-        else:
-            neutral_samples.append(clean_row)
-
-    # We cap NEUTRALs to roughly match the directional samples to prevent Mode Collapse
-    max_neutrals = len(directional_samples) + 20 
-    random.shuffle(neutral_samples)
-    balanced_neutral_samples = neutral_samples[:max_neutrals]
-    
-    final_dataset = directional_samples + balanced_neutral_samples
-    random.shuffle(final_dataset) # Shuffle so it doesn't learn a pattern of CE CE PE NEUTRAL NEUTRAL
-
-    ce_count = sum(1 for x in final_dataset if '"direction": "CE"' in x['output'])
-    pe_count = sum(1 for x in final_dataset if '"direction": "PE"' in x['output'])
-    neutral_count = sum(1 for x in final_dataset if '"direction": "NEUTRAL"' in x['output'])
+        })
 
     print(f"Malformed JSON dropped: {anomalies['malformed_output']}")
     print(f"Missing Field dropped: {anomalies['missing_fields']}")
     print(f"Illogical Signals dropped: {anomalies['illogical_signal']}")
-
-    print(f"CE: {ce_count} | PE: {pe_count} | NEUTRAL: {neutral_count}")
-    print(f"Total rows ready for training: {len(final_dataset)}")
+    print(f"Total safe, upgraded rows ready for training: {len(cleaned_data)} / {len(instructions)}")
+    
+    # Calculate exact distribution to prove the cause of Mode Collapse in the report
+    ce_count = sum(1 for x in cleaned_data if '"direction": "CE"' in x['output'])
+    pe_count = sum(1 for x in cleaned_data if '"direction": "PE"' in x['output'])
+    neutral_count = sum(1 for x in cleaned_data if '"direction": "NEUTRAL"' in x['output'])
+    print(f"Final Distribution -> CE: {ce_count} | PE: {pe_count} | NEUTRAL: {neutral_count}")
     
     with open('data/processed/finetune_clean_cot.jsonl', 'w') as f:
-        for item in final_dataset:
+        for item in cleaned_data:
             f.write(json.dumps(item) + '\n')
+
 
 if __name__ == "__main__":
     process_and_clean_data()
