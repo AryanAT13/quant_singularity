@@ -12,7 +12,6 @@ class SignalSchema(BaseModel):
     analysis: Optional[Dict[str, bool]] = None
 
 class OrchestratorLog(BaseModel):
-    """Structured logging to prove to the reviewers we track every decision."""
     original_signal: Optional[Dict[str, Any]] = None
     final_signal: Dict[str, Any]
     reason_code: str
