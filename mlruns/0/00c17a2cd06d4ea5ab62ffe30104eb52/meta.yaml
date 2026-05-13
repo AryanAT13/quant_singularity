@@ -1,0 +1,14 @@
+artifact_uri: file:///kaggle/working/mlruns/0/00c17a2cd06d4ea5ab62ffe30104eb52/artifacts
+end_time: 1778648557179
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 00c17a2cd06d4ea5ab62ffe30104eb52
+run_name: WalkForward_RAG_True
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1778644565095
+status: 3
+tags: []
+user_id: aryan

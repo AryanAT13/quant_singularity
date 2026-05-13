@@ -1,0 +1,8 @@
+artifact_location: file:///kaggle/working/mlruns/196943520665256558
+creation_time: 1778639647502
+experiment_id: '196943520665256558'
+last_update_time: 1778639647502
+lifecycle_stage: active
+name: quant_singularity
+trace_location: null
+workspace: default
