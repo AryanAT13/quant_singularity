@@ -6,9 +6,9 @@
 
 ## Overview
 
-The system is a production-style signal pod that ingests a NIFTY options market state snapshot and emits a structured trading signal through a deterministic orchestration layer.
+The system is a production style signal pod that ingests a NIFTY options market state snapshot and emits a structured trading signal through a deterministic orchestration layer.
 
-The pod was built under the constraint that **the orchestrator must always win over the model.** Every output — whether a valid directional signal or a forced NEUTRAL — is the result of the deterministic layer, never raw model output. The model earns its place only after every rule-based check has been satisfied.
+The pod was built under the constraint that **the orchestrator must always win over the model.** Every output, whether a valid directional signal or a forced NEUTRAL — is the result of the deterministic layer, never raw model output. The model earns its place only after every rule-based check has been satisfied.
 
 ---
 
