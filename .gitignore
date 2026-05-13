@@ -2,6 +2,4 @@ __pycache__/
 *.parquet
 *.jsonl
 .env
-mlruns/
 *.gguf
-adapter_model/
