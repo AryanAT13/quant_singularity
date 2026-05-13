@@ -28,7 +28,7 @@ The notebook is also committed to this repository at `notebook/quant_finetune.ip
 .
 ├── README.md
 ├── requirements.txt
-├── report.pdf                   
+├── Report.pdf                   
 │
 ├── data/
 │   ├── raw/
