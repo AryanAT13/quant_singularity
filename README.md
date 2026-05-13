@@ -152,5 +152,3 @@ pip install -r requirements.txt
 ```bash
 python3 -m src.pipeline
 ```
-
-This runs the full Day 31–60 walk-forward evaluation through the orchestrator and writes per-window results to `results/walk_forward_results.json`.
